@@ -1,5 +1,5 @@
 // ==============================
-// 상시 풀 예시
+// 상시 풀
 // ==============================
 const pool = {
   standard: [
@@ -47,16 +47,16 @@ const pool = {
 // ==============================
 // 확률 / 천장 설정
 // ==============================
-const baseRate6 = 0.008;    // 기본 6성 확률 0.8%
+const baseRate6 = 0.008;
 let rates = {5:0.08, 4:0.912};
-const defaultPityLimit = 80;   // 천장
-let pityCounter = 0;            // 현재 단발/10연 기준 pity
-let totalPullCounter = 0;       // 전체 뽑기 횟수
-const pityStart = 65;           // 확률 상향 시작
-const pityIncrement = 0.05;     // 5%씩 증가
+const defaultPityLimit = 80;
+let pityCounter = 0;
+let totalPullCounter = 0;
+const pityStart = 65;
+const pityIncrement = 0.05;
 
 // ==============================
-// DOM 요소
+// DOM
 // ==============================
 const resultsEl = document.getElementById('results');
 const leaderboardEl = document.getElementById('leaderboard');
@@ -71,7 +71,7 @@ const clearLB = document.getElementById('clearLB');
 const currentPullCountEl = document.getElementById('currentPullCount');
 const pityRemainingEl = document.getElementById('pityRemaining');
 const currentRate6El = document.getElementById('currentRate6');
-const totalPullCountEl = document.getElementById('totalPullCount'); // 전체 뽑기 표시
+const totalPullCountEl = document.getElementById('totalPullCount');
 
 // ==============================
 // 이벤트
@@ -91,7 +91,7 @@ bannerSelect.addEventListener('change', ()=>{
 });
 
 // ==============================
-// 현재 뽑기 및 확률 표시
+// 뽑기 표시
 // ==============================
 function updatePullDisplay() {
   currentPullCountEl.textContent = pityCounter;
@@ -141,8 +141,7 @@ function getBannerPool(bannerKey){
 // 뽑기 로직
 // ==============================
 function pickRandomFromPool(rarity){
-  const b = bannerSelect.value;
-  const bannerPool = pool.banners[b] || [];
+  const bannerPool = pool.banners[bannerSelect.value] || [];
   const standardPool = pool.standard;
 
   if(rarity===6){
@@ -160,14 +159,13 @@ function pickRandomFromPool(rarity){
   if(candidates.length===0){
     const all = Object.values(pool.banners).flat().concat(pool.standard);
     const any = all.filter(x=>x.rarity===rarity);
-    if(any.length>0) return any[Math.floor(Math.random()*any.length)];
-    return all[Math.floor(Math.random()*all.length)];
+    return any[Math.floor(Math.random()*any.length)];
   }
   return candidates[Math.floor(Math.random()*candidates.length)];
 }
 
 // ==============================
-// 단발/10연 뽑기 확률 계산
+// 뽑기 확률
 // ==============================
 function weightedRarityRoll(){
   let rate6 = baseRate6;
@@ -216,35 +214,12 @@ function runPull(count=1){
     if(rty===6) pityCounter = 0;
     else pityCounter++;
 
-    totalPullCounter++; // 전체 뽑기 증가
+    totalPullCounter++;
     pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
   }
 
   renderCards(outcomes,count);
   updatePullDisplay();
-}
-
-// ==============================
-// 시뮬레이션용 함수
-// ==============================
-function weightedRarityRoll(){
-  let rate6 = baseRate6;
-
-  // 확률 상향형 적용
-  if(pityCounter >= pityStart) rate6 += pityIncrement * (pityCounter - pityStart + 1);
-  if(rate6 > 1) rate6 = 1;
-
-  // 천장 적용: 항상 발동
-  if(pityCounter >= defaultPityLimit - 1) return 6;
-
-  const r = Math.random();
-  let acc = 0;
-  for(const rty of [6,5,4]){
-    const rRate = (rty===6)? rate6 : rates[rty];
-    acc += rRate;
-    if(r < acc) return rty;
-  }
-  return 4;
 }
 
 // ==============================
@@ -254,24 +229,29 @@ function runSimulation(){
   const n = Math.max(1, parseInt(simCountInput.value||1000));
   let got6 = 0, pullsToFirst6 = null, totalPulls = 0;
 
-  const enablePity = pityToggle.checked;
-
   for(let i=0;i<n;i++){
     let localPity = 0;
     let pulls = 0;
     while(true){
       pulls++;
       totalPulls++;
-
-      const rty = weightedRarityRollSim(localPity, enablePity);
-
-      if(rty === 6){
-        got6++;
-        if(pullsToFirst6 === null) pullsToFirst6 = pulls;
-        break;
-      } else {
-        localPity++;
+      let rate6 = baseRate6;
+      if(localPity >= pityStart) rate6 += pityIncrement*(localPity-pityStart+1);
+      if(rate6>1) rate6=1;
+      const r = Math.random();
+      let rty = 4;
+      let acc = 0;
+      for(const t of [6,5,4]){
+        const rRate = (t===6)? rate6 : rates[t];
+        acc += rRate;
+        if(r<acc){ rty = t; break; }
       }
+
+      if(rty===6){
+        got6++;
+        if(pullsToFirst6===null) pullsToFirst6 = pulls;
+        break;
+      } else localPity++;
     }
   }
 
