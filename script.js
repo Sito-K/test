@@ -1,7 +1,6 @@
-// ====== 캐릭터 풀 ======
+// 상시 풀 예시
 const pool = {
   standard: [
-    // 공통 상시 캐릭터
     {id:'s6_1', name:'아델리아', rarity:6, img:'assets/ardelia.png'},
     {id:'s6_2', name:'엠버', rarity:6, img:'assets/ember.png'},
     {id:'s6_5', name:'라스트 라이트', rarity:6, img:'assets/lastrite.png'},
@@ -33,7 +32,8 @@ const pool = {
     ],
     limitedB: [
       // 배너 B 한정
-      {id:'s6_111', name:'테스트', rarity:6, img:'assets/test.png'},
+      {id:'s6_389', name:'9999', rarity:6, img:'assets/99.png', isPickup: true},
+      {id:'s6_111', name:'테스트', rarity:6, img:'assets/test.png', isPickup: false}
     ],
     limitedC: [
       // 배너 C 한정
@@ -42,12 +42,16 @@ const pool = {
   }
 };
 
-// ====== 기본 확률 ======
-let rates = {6:0.008, 5:0.08, 4:0.912};
-const defaultPityLimit = 80;
+// ==============================
+// 확률/천장 설정
+// ==============================
+let rates = {6:0.008, 5:0.08, 4:0.912}; // 기본 확률 (슬라이더에서 조정 가능)
+const defaultPityLimit = 80;            // 천장 설정
 let pityCounter = 0;
 
-// ====== DOM 요소 ======
+// ==============================
+// DOM 요소
+// ==============================
 const resultsEl = document.getElementById('results');
 const logEl = document.getElementById('log');
 const leaderboardEl = document.getElementById('leaderboard');
@@ -63,12 +67,14 @@ const runSim = document.getElementById('runSim');
 const simOutput = document.getElementById('simOutput');
 const clearLB = document.getElementById('clearLB');
 
-// ====== 이벤트 ======
+// ==============================
+// 이벤트 처리
+// ==============================
 rate6.addEventListener('input', () => {
   const v = parseFloat(rate6.value);
   rate6Label.textContent = v.toFixed(2) + '%';
   rates[6] = v / 100;
-  rates[5] = 0.08; // 5성 고정
+  rates[5] = 0.08;
   rates[4] = 1 - rates[6] - rates[5];
 });
 
@@ -80,7 +86,9 @@ clearLB.addEventListener('click', ()=> {
   renderLeaderboard(); 
 });
 
-// ====== 로컬 히스토리/리더보드 ======
+// ==============================
+// 로컬 히스토리 & 리더보드
+// ==============================
 function pushHistory(entry){
   const key = 'gacha_history';
   const list = JSON.parse(localStorage.getItem(key) || '[]');
@@ -98,127 +106,129 @@ function pushHistory(entry){
 
 function renderLeaderboard(){
   const lb = JSON.parse(localStorage.getItem('gacha_lb') || '[]');
-  if (lb.length === 0) leaderboardEl.textContent = '기록 없음';
-  else {
-    leaderboardEl.innerHTML = lb.slice(0,20)
-      .map((e,i)=> `<div>${i+1}. ${e.name} — ${new Date(e.when).toLocaleString()}</div>`)
-      .join('');
-  }
+  if(lb.length===0) leaderboardEl.textContent='기록 없음';
+  else leaderboardEl.innerHTML = lb.slice(0,20)
+    .map((e,i)=> `<div>${i+1}. ${e.name} — ${new Date(e.when).toLocaleString()}</div>`).join('');
 }
 
-// ====== 배너별 풀 가져오기 ======
+// ==============================
+// 배너별 풀 가져오기
+// ==============================
 function getBannerPool(bannerKey){
   const limitedPool = pool.banners[bannerKey] || [];
   return [...pool.standard, ...limitedPool];
 }
 
-// ====== 뽑기 로직 ======
-function weightedRarityRoll(applyPity=true){
-  if (applyPity && pityToggle.checked && pityCounter >= defaultPityLimit - 1){
-    return 6;
-  }
-  const r = Math.random();
-  let acc = 0;
-  for (const rty of [6,5,4]){
-    acc += rates[rty];
-    if (r < acc) return rty;
-  }
-  return 4;
-}
-
+// ==============================
+// 뽑기 로직 (픽업 50%)
+// ==============================
 function pickRandomFromPool(rarity){
   const b = bannerSelect.value;
   const bannerPool = pool.banners[b] || [];
   const standardPool = pool.standard;
 
-  if (rarity === 6){
-    // 1. 픽업 대상 캐릭터 목록 (배너 한정 중 특정 캐릭터)
-    const pickup6 = bannerPool.filter(x => x.rarity === 6 && x.isPickup);
-    const other6 = [...standardPool, ...bannerPool].filter(x => x.rarity === 6 && !x.isPickup);
+  if(rarity===6){
+    const pickup6 = bannerPool.filter(x=>x.rarity===6 && x.isPickup);
+    const other6 = [...standardPool, ...bannerPool].filter(x=>x.rarity===6 && !x.isPickup);
 
-    if (pickup6.length > 0 && Math.random() < 0.5){
-      // 50% 확률로 픽업 캐릭터 선택
-      return pickup6[Math.floor(Math.random() * pickup6.length)];
-    } else if (other6.length > 0){
-      // 나머지 50%는 상시 6성 또는 한정 6성(픽업 제외)에서 선택
-      return other6[Math.floor(Math.random() * other6.length)];
+    if(pickup6.length>0 && Math.random()<0.5){
+      return pickup6[Math.floor(Math.random()*pickup6.length)];
+    } else if(other6.length>0){
+      return other6[Math.floor(Math.random()*other6.length)];
     }
   }
 
-  // 5성/4성 또는 6성 fallback
-  const candidates = [...standardPool, ...bannerPool].filter(x => x.rarity === rarity);
-  if (candidates.length === 0){
+  const candidates = [...standardPool, ...bannerPool].filter(x=>x.rarity===rarity);
+  if(candidates.length===0){
     const all = Object.values(pool.banners).flat().concat(pool.standard);
     const any = all.filter(x=>x.rarity===rarity);
-    if (any.length>0) return any[Math.floor(Math.random()*any.length)];
+    if(any.length>0) return any[Math.floor(Math.random()*any.length)];
     return all[Math.floor(Math.random()*all.length)];
   }
   return candidates[Math.floor(Math.random()*candidates.length)];
 }
 
-// ====== 카드 렌더링 ======
-function renderCards(outcomes, count){
-  resultsEl.innerHTML = '';
-  resultsEl.className = 'results-grid ' + (count === 10 ? 'ten' : 'single');
-  outcomes.forEach(card => {
+// ==============================
+// 별 등급 결정 (확률+천장)
+// ==============================
+function weightedRarityRoll(applyPity=true){
+  if(applyPity && pityToggle.checked && pityCounter>=defaultPityLimit-1){
+    return 6; // 천장 적용
+  }
+  const r = Math.random();
+  let acc=0;
+  for(const rty of [6,5,4]){
+    acc+=rates[rty];
+    if(r<acc) return rty;
+  }
+  return 4;
+}
+
+// ==============================
+// 카드 렌더링
+// ==============================
+function renderCards(outcomes,count){
+  resultsEl.innerHTML='';
+  resultsEl.className='results-grid '+(count===10?'ten':'single');
+  outcomes.forEach(card=>{
     const node = cardTpl.cloneNode(true);
     const el = node.querySelector('.card');
-    el.classList.add('r' + card.rarity);
-    node.querySelector('.char-img').src = card.img || 'assets/placeholder.png';
-    node.querySelector('.char-name').textContent = card.name;
-    node.querySelector('.rarity-badge').textContent = card.rarity + '★';
+    el.classList.add('r'+card.rarity);
+    node.querySelector('.char-img').src=card.img||'assets/placeholder.png';
+    node.querySelector('.char-name').textContent=card.name;
+    node.querySelector('.rarity-badge').textContent=card.rarity+'★';
     resultsEl.appendChild(node);
   });
 }
 
-// ====== 단발 / 10연 ======
+// ==============================
+// 단발/10연 소환
+// ==============================
 function runPull(count=1){
-  const outcomes = [];
-  for (let i=0;i<count;i++){
-    const rty = weightedRarityRoll(true);
-    const pick = pickRandomFromPool(rty);
+  const outcomes=[];
+  for(let i=0;i<count;i++){
+    const rty=weightedRarityRoll(true);
+    const pick=pickRandomFromPool(rty);
     outcomes.push(pick);
 
-    if (rty === 6) pityCounter = 0;
+    if(rty===6) pityCounter=0;
     else pityCounter++;
 
-    pushHistory({when: new Date().toISOString(), name: pick.name, rarity: pick.rarity});
+    pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
   }
-  renderCards(outcomes, count);
-  logEl.textContent = `${count}회 소환: ${outcomes.map(o=>`${o.name}(${o.rarity}★)`).join(' / ')}`;
+  renderCards(outcomes,count);
+  logEl.textContent=`${count}회 소환: ${outcomes.map(o=>`${o.name}(${o.rarity}★)`).join(' / ')}`;
 }
 
-// ====== 시뮬레이션 ======
+// ==============================
+// 시뮬레이션
+// ==============================
 function runSimulation(){
-  const n = Math.max(1, parseInt(simCountInput.value || 1000));
-  let got6 = 0;
-  let pullsToFirst6 = null;
-  let totalPulls = 0;
-  let localPity = 0;
+  const n=Math.max(1,parseInt(simCountInput.value||1000));
+  let got6=0, pullsToFirst6=null, totalPulls=0, localPity=0;
 
-  for (let i=0;i<n;i++){
-    let pulls = 0;
+  for(let i=0;i<n;i++){
+    let pulls=0;
     while(true){
       pulls++;
       totalPulls++;
-      const rty = (pityToggle.checked && localPity >= defaultPityLimit-1) ? 6 : (Math.random() < rates[6] ? 6 : (Math.random() < rates[5]/(rates[5]+rates[4]) ? 5 : 4));
-      if (rty === 6){
+      const rty=(pityToggle.checked && localPity>=defaultPityLimit-1)?6:
+        (Math.random()<rates[6]?6:(Math.random()<rates[5]/(rates[5]+rates[4])?5:4));
+      if(rty===6){
         got6++;
-        localPity = 0;
-        if (pullsToFirst6 === null) pullsToFirst6 = pulls;
+        localPity=0;
+        if(pullsToFirst6===null) pullsToFirst6=pulls;
         break;
-      } else {
-        localPity++;
-      }
+      } else localPity++;
     }
   }
-  const avgPullsFor6 = (totalPulls / got6) || 0;
-  simOutput.textContent = `실험 수: ${n}\n6성 획득 총합: ${got6}\n평균 뽑기 (6성 당): ${avgPullsFor6.toFixed(2)}\n첫 6성까지 걸린 뽑기(샘플): ${pullsToFirst6}`;
+  const avgPullsFor6=(totalPulls/got6)||0;
+  simOutput.textContent=`실험 수: ${n}\n6성 획득 총합: ${got6}\n평균 뽑기 (6성 당): ${avgPullsFor6.toFixed(2)}\n첫 6성까지 걸린 뽑기(샘플): ${pullsToFirst6}`;
 }
 
-// ====== 보조 ======
-function updateRateLabel(){ 
-  rate6Label.textContent = (parseFloat(rate6.value)||0).toFixed(2) + '%'; 
-}
+// ==============================
+// 보조
+// ==============================
+function updateRateLabel(){ rate6Label.textContent=(parseFloat(rate6.value)||0).toFixed(2)+'%'; }
 updateRateLabel();
 renderLeaderboard();
