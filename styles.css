@@ -121,3 +121,23 @@ select,input[type="range"],input[type="number"]{
   .topbar{flex-direction:column;gap:10px}
   .controls{width:100%;justify-content:center}
 }
+
+.banner-buttons {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.banner-btn {
+  background:#14233a;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.08);
+  font-size:0.85rem;
+}
+
+.banner-btn.active {
+  background:linear-gradient(90deg,#1e6cff,#2ea6ff);
+  font-weight:700;
+}
