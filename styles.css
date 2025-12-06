@@ -138,6 +138,7 @@ select,input[type="range"],input[type="number"]{
 }
 
 .banner-btn.active {
-  background:linear-gradient(90deg,#1e6cff,#2ea6ff);
-  font-weight:700;
+    border: 3px solid #4ea3ff;
+    box-shadow: 0 0 12px #4ea3ff;
+    border-radius: 8px;
 }
