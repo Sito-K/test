@@ -376,11 +376,11 @@ function runSimulation(){
     `시뮬레이션 횟수: ${trials.toLocaleString()}`,
     '',
     `결과 요약:`,
-    `  6★: ${stats[6].toLocaleString()}개 (${pct6}%)`,
-    `  5★: ${stats[5].toLocaleString()}개 (${pct5}%)`,
-    `  4★: ${stats[4].toLocaleString()}개 (${pct4}%)`,
+    `  6성: ${stats[6].toLocaleString()}개 (${pct6}%)`,
+    `  5성: ${stats[5].toLocaleString()}개 (${pct5}%)`,
+    `  4성: ${stats[4].toLocaleString()}개 (${pct4}%)`,
     '',
-    `6★ 평균 등장까지 소요 뽑기수: ${avgPullsTo6}`,
+    `6성 등장까지 평균 뽑기수: ${avgPullsTo6}`,
     '',
   ].join('\n');
 
