@@ -3,17 +3,14 @@ const pool = {
   standard: [
     {id:'s6_1', name:'아델리아', rarity:6, img:'assets/ardelia.png'},
     {id:'s6_2', name:'엠버', rarity:6, img:'assets/ember.png'},
-    {id:'s6_4', name:'질베르타', rarity:6, img:'assets/gilberta.png'},
-    {id:'s6_5', name:'레바테인', rarity:6, img:'assets/laevatain.png'},
-    {id:'s6_6', name:'라스트 라이트', rarity:6, img:'assets/lastrite.png'},
-    {id:'s6_7', name:'여풍', rarity:6, img:'assets/lifeng.png'},
-    {id:'s6_8', name:'Pogranichnik', rarity:6, img:'assets/pogranichnik.png'},
-    {id:'s6_9', name:'이본', rarity:6, img:'assets/yvonne.png'},
+    {id:'s6_5', name:'라스트 라이트', rarity:6, img:'assets/lastrite.png'},
+    {id:'s6_6', name:'여풍', rarity:6, img:'assets/lifeng.png'},
+    {id:'s6_7', name:'포그라니치니크', rarity:6, img:'assets/pogranichnik.png'},
     
     {id:'s5_1', name:'알레쉬', rarity:5, img:'assets/alesh.png'},
     {id:'s5_2', name:'아크라이트', rarity:5, img:'assets/arclight.png'},
     {id:'s5_3', name:'아비웨나', rarity:5, img:'assets/avywenna.png'},
-    {id:'s5_4', name:'전천우', rarity:5, img:'assets/chen.png'},
+    {id:'s5_4', name:'진천우', rarity:5, img:'assets/chen.png'},
     {id:'s5_5', name:'판', rarity:5, img:'assets/dapan.png'},
     {id:'s5_6', name:'펠리카', rarity:5, img:'assets/perlica.png'},
     {id:'s5_7', name:'스노우샤인', rarity:5, img:'assets/snowshine.png'},
@@ -22,16 +19,36 @@ const pool = {
 
     {id:'s4_1', name:'아케쿠리', rarity:4, img:'assets/akekuri.png'},
     {id:'s4_2', name:'안탈', rarity:4, img:'assets/antal.png'},
-    {id:'s4_3', name:'4★: Catcher', rarity:4, img:'assets/catcher.png'},
+    {id:'s4_3', name:'카치르', rarity:4, img:'assets/catcher.png'},
     {id:'s4_4', name:'에스텔라', rarity:4, img:'assets/estella.png'},
-    {id:'s4_5', name:'플로라이트', rarity:4, img:'assets/fluorite.png'}
+    {id:'s4_5', name:'플루라이트', rarity:4, img:'assets/fluorite.png'}
   ],
   limited: [
     // limited banner can alter pity/rates or pool
-    {id:'l6_1', name:'6★: Limited A', rarity:6, img:'assets/6star1.png'},
-    {id:'l5_1', name:'5★: Limited A', rarity:5, img:'assets/5star1.png'},
-    {id:'l4_1', name:'4★: Limited A', rarity:4, img:'assets/4star1.png'}
-  ]
+    {id:'s6_1', name:'아델리아', rarity:6, img:'assets/ardelia.png'},
+    {id:'s6_2', name:'엠버', rarity:6, img:'assets/ember.png'},
+    {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png'},
+    {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png'},
+    {id:'s6_5', name:'라스트 라이트', rarity:6, img:'assets/lastrite.png'},
+    {id:'s6_6', name:'여풍', rarity:6, img:'assets/lifeng.png'},
+    {id:'s6_7', name:'포그라니치니크', rarity:6, img:'assets/pogranichnik.png'},
+    {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png'},
+    
+    {id:'s5_1', name:'알레쉬', rarity:5, img:'assets/alesh.png'},
+    {id:'s5_2', name:'아크라이트', rarity:5, img:'assets/arclight.png'},
+    {id:'s5_3', name:'아비웨나', rarity:5, img:'assets/avywenna.png'},
+    {id:'s5_4', name:'진천우', rarity:5, img:'assets/chen.png'},
+    {id:'s5_5', name:'판', rarity:5, img:'assets/dapan.png'},
+    {id:'s5_6', name:'펠리카', rarity:5, img:'assets/perlica.png'},
+    {id:'s5_7', name:'스노우샤인', rarity:5, img:'assets/snowshine.png'},
+    {id:'s5_8', name:'울프가드', rarity:5, img:'assets/wulfgard.png'},
+    {id:'s5_9', name:'자이히', rarity:5, img:'assets/xaihi.png'},
+
+    {id:'s4_1', name:'아케쿠리', rarity:4, img:'assets/akekuri.png'},
+    {id:'s4_2', name:'안탈', rarity:4, img:'assets/antal.png'},
+    {id:'s4_3', name:'카치르', rarity:4, img:'assets/catcher.png'},
+    {id:'s4_4', name:'에스텔라', rarity:4, img:'assets/estella.png'},
+    {id:'s4_5', name:'플루라이트', rarity:4, img:'assets/fluorite.png'}  ]
 };
 
 // 기본 rates (6★는 슬라이더 조정 가능)
