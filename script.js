@@ -51,6 +51,7 @@ const baseRate6 = 0.008;
 let rates = {5:0.08, 4:0.912};
 const defaultPityLimit = 80;
 let pityCounter = 0;
+let pity5Counter = 0;
 let totalPullCounter = 0;
 const pityStart = 65;
 const pityIncrement = 0.05;
@@ -171,18 +172,39 @@ function pickRandomFromPool(rarity){
 // ==============================
 function weightedRarityRoll(){
   let rate6 = baseRate6;
-  if(pityCounter >= pityStart) rate6 += pityIncrement * (pityCounter - pityStart + 1);
+
+  // 6성 가속 피티
+  if(pityCounter >= pityStart) {
+    rate6 += pityIncrement * (pityCounter - pityStart + 1);
+  }
   if(rate6 > 1) rate6 = 1;
 
-  if(pityCounter >= defaultPityLimit - 1) return 6;
+  // -------------------------------------
+  // ① 5성 천장: 10회 동안 5성 이상 없으면 이번 뽑기는 강제 5성
+  // -------------------------------------
+  if(pity5Counter >= 9) {
+    return 5; // 이번 뽑기는 반드시 5성
+  }
 
+  // -------------------------------------
+  // ② 6성 천장: 80회째는 강제 6성
+  // -------------------------------------
+  if(pityCounter >= defaultPityLimit - 1) {
+    return 6;
+  }
+
+  // -------------------------------------
+  // ③ 일반 확률 계산
+  // -------------------------------------
   const r = Math.random();
   let acc = 0;
-  for(const rty of [6,5,4]){
-    const rRate = (rty===6)? rate6 : rates[rty];
-    acc += rRate;
-    if(r < acc) return rty;
-  }
+
+  acc += rate6;
+  if(r < acc) return 6;
+
+  acc += rates[5];
+  if(r < acc) return 5;
+
   return 4;
 }
 
@@ -213,8 +235,17 @@ function runPull(count=1){
     const pick = pickRandomFromPool(rty);
     outcomes.push(pick);
 
-    if(rty===6) pityCounter = 0;
-    else pityCounter++;
+// pity 처리
+  if(rty === 6){
+    pityCounter = 0;      // 6성 피티 리셋
+    pity5Counter = 0;     // 5성 피티도 리셋
+  } else if(rty === 5){
+    pity5Counter = 0;     // 5성 피티 리셋
+    pityCounter++;        // 6성 피티 증가
+  } else {
+    pityCounter++;        // 4성 → 6성 피티 증가
+    pity5Counter++;       // 4성 → 5성 피티 증가
+  }
 
     totalPullCounter++;
     pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
