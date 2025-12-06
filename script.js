@@ -48,6 +48,7 @@ const baseRate6 = 0.008;    // 기본 6성 확률 0.8%
 let rates = {5:0.08, 4:0.912};
 const defaultPityLimit = 80;   // 천장
 let pityCounter = 0;            // 현재 단발/10연 기준 pity
+let totalPullCounter = 0;       // 전체 뽑기 횟수
 const pityStart = 65;           // 확률 상향 시작
 const pityIncrement = 0.05;     // 5%씩 증가
 
@@ -68,6 +69,7 @@ const clearLB = document.getElementById('clearLB');
 const currentPullCountEl = document.getElementById('currentPullCount');
 const pityRemainingEl = document.getElementById('pityRemaining');
 const currentRate6El = document.getElementById('currentRate6');
+const totalPullCountEl = document.getElementById('totalPullCount'); // 전체 뽑기 표시
 
 // ==============================
 // 이벤트
@@ -80,12 +82,19 @@ clearLB.addEventListener('click', ()=> {
   renderLeaderboard(); 
 });
 
+// 배너 변경 시 천장 초기화
+bannerSelect.addEventListener('change', ()=>{
+  pityCounter = 0;
+  updatePullDisplay();
+});
+
 // ==============================
 // 현재 뽑기 및 확률 표시
 // ==============================
 function updatePullDisplay() {
   currentPullCountEl.textContent = pityCounter;
   pityRemainingEl.textContent = Math.max(0, defaultPityLimit - pityCounter);
+  totalPullCountEl.textContent = totalPullCounter;
 
   let currentRate = baseRate6;
   if(pityCounter >= pityStart) currentRate += pityIncrement * (pityCounter - pityStart + 1);
@@ -156,7 +165,7 @@ function pickRandomFromPool(rarity){
 }
 
 // ==============================
-// 단발/10연 뽑기 확률 계산 (실제 pityCounter 기준)
+// 단발/10연 뽑기 확률 계산
 // ==============================
 function weightedRarityRoll(){
   let rate6 = baseRate6;
@@ -205,6 +214,7 @@ function runPull(count=1){
     if(rty===6) pityCounter = 0;
     else pityCounter++;
 
+    totalPullCounter++; // 전체 뽑기 증가
     pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
   }
 
@@ -213,14 +223,17 @@ function runPull(count=1){
 }
 
 // ==============================
-// 시뮬레이션용 함수 (별도 로컬 pity)
+// 시뮬레이션용 함수
 // ==============================
-function weightedRarityRollSim(localPity, enablePity){
+function weightedRarityRoll(){
   let rate6 = baseRate6;
-  if(localPity >= pityStart) rate6 += pityIncrement * (localPity - pityStart + 1);
+
+  // 확률 상향형 적용
+  if(pityCounter >= pityStart) rate6 += pityIncrement * (pityCounter - pityStart + 1);
   if(rate6 > 1) rate6 = 1;
 
-  if(enablePity && localPity >= defaultPityLimit - 1) return 6;
+  // 천장 적용: 항상 발동
+  if(pityCounter >= defaultPityLimit - 1) return 6;
 
   const r = Math.random();
   let acc = 0;
