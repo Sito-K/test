@@ -252,26 +252,32 @@ function runPull(count=1){
 // 시뮬레이션
 // ==============================
 function runSimulation(){
-  const n=Math.max(1,parseInt(simCountInput.value||1000));
-  let got6=0, pullsToFirst6=null, totalPulls=0, localPity=0;
+  const n = Math.max(1, parseInt(simCountInput.value||1000));
+  let got6 = 0, pullsToFirst6 = null, totalPulls = 0;
+  let localPity = 0;
 
   for(let i=0;i<n;i++){
-    let pulls=0;
+    let pulls = 0;
     while(true){
       pulls++;
       totalPulls++;
-      const rty=(pityToggle.checked && localPity>=defaultPityLimit-1)?6:
-        (Math.random()<rates[6]?6:(Math.random()<rates[5]/(rates[5]+rates[4])?5:4));
-      if(rty===6){
+
+      // 시뮬레이션용 6성 확률 계산 (상향형 천장 + pityCounter 동일)
+      let rty = weightedRarityRoll(true);
+
+      if(rty === 6){
         got6++;
-        localPity=0;
-        if(pullsToFirst6===null) pullsToFirst6=pulls;
+        localPity = 0;
+        if(pullsToFirst6 === null) pullsToFirst6 = pulls;
         break;
-      } else localPity++;
+      } else {
+        localPity++;
+      }
     }
   }
-  const avgPullsFor6=(totalPulls/got6)||0;
-  simOutput.textContent=`실험 수: ${n}\n6성 획득 총합: ${got6}\n평균 뽑기 (6성 당): ${avgPullsFor6.toFixed(2)}\n첫 6성까지 걸린 뽑기(샘플): ${pullsToFirst6}`;
+
+  const avgPullsFor6 = (totalPulls / got6) || 0;
+  simOutput.textContent = `실험 수: ${n}\n6성 획득 총합: ${got6}\n평균 뽑기 (6성 당): ${avgPullsFor6.toFixed(2)}\n첫 6성까지 걸린 뽑기(샘플): ${pullsToFirst6}`;
 }
 
 // ==============================
