@@ -26,8 +26,8 @@ const pool = {
   banners: {
     limitedA: [
       // 배너 A 한정
-      {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png', isPickup: true},
-      {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png', isPickup: false},
+      {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png', isPickup: false},
+      {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png', isPickup: true},
       {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png', isPickup: false}
     ],
     limitedB: [
