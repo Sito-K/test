@@ -27,9 +27,9 @@ const pool = {
   banners: {
     limitedA: [
       // 배너 A 한정
-      {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png'},
-      {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png'}
-      {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png'}
+      {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png', isPickup: true},
+      {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png', isPickup: false},
+      {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png', isPickup: false}
     ],
     limitedB: [
       // 배너 B 한정
@@ -129,22 +129,24 @@ function weightedRarityRoll(applyPity=true){
 function pickRandomFromPool(rarity){
   const b = bannerSelect.value;
   const bannerPool = pool.banners[b] || [];
-  const fullPool = [...pool.standard];
+  const standardPool = pool.standard;
 
-  if (rarity === 6 && bannerPool.length > 0){
-    // 50% 확률로 한정 캐릭터
-    if (Math.random() < 0.5){
-      // 한정 6성 중 랜덤
-      const limited6 = bannerPool.filter(x => x.rarity === 6);
-      if (limited6.length > 0) return limited6[Math.floor(Math.random()*limited6.length)];
+  if (rarity === 6){
+    // 1. 픽업 대상 캐릭터 목록 (배너 한정 중 특정 캐릭터)
+    const pickup6 = bannerPool.filter(x => x.rarity === 6 && x.isPickup);
+    const other6 = [...standardPool, ...bannerPool].filter(x => x.rarity === 6 && !x.isPickup);
+
+    if (pickup6.length > 0 && Math.random() < 0.5){
+      // 50% 확률로 픽업 캐릭터 선택
+      return pickup6[Math.floor(Math.random() * pickup6.length)];
+    } else if (other6.length > 0){
+      // 나머지 50%는 상시 6성 또는 한정 6성(픽업 제외)에서 선택
+      return other6[Math.floor(Math.random() * other6.length)];
     }
-    // 나머지 50%는 상시 6성
-    const standard6 = fullPool.filter(x => x.rarity === 6);
-    if (standard6.length > 0) return standard6[Math.floor(Math.random()*standard6.length)];
   }
 
-  // 5성/4성 혹은 6성 fallback
-  const candidates = [...fullPool, ...bannerPool].filter(x => x.rarity === rarity);
+  // 5성/4성 또는 6성 fallback
+  const candidates = [...standardPool, ...bannerPool].filter(x => x.rarity === rarity);
   if (candidates.length === 0){
     const all = Object.values(pool.banners).flat().concat(pool.standard);
     const any = all.filter(x=>x.rarity===rarity);
