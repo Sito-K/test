@@ -191,19 +191,49 @@ function renderCards(outcomes,count){
 // ==============================
 // 단발/10연 소환
 // ==============================
+const baseRate6 = 0.008;    // 기본 6성 확률 0.8%
+const pityStart = 65;        // 확률 상승 시작
+const pityIncrement = 0.05;  // 5%씩 증가
+
+function weightedRarityRoll(applyPity=true){
+  let rate6 = rates[6];
+
+  // 확률 상향형 천장 적용
+  if(pityCounter >= pityStart){
+    rate6 += pityIncrement * (pityCounter - pityStart + 1);
+  }
+  if(rate6 > 1) rate6 = 1; // 최대 100%
+
+  // 기존 천장 체크
+  if(applyPity && pityToggle.checked && pityCounter >= defaultPityLimit - 1){
+    return 6;
+  }
+
+  const r = Math.random();
+  let acc = 0;
+  for(const rty of [6,5,4]){
+    const rRate = (rty===6) ? rate6 : rates[rty];
+    acc += rRate;
+    if(r < acc) return rty;
+  }
+  return 4;
+}
+
 function runPull(count=1){
-  const outcomes=[];
+  const outcomes = [];
   for(let i=0;i<count;i++){
-    const rty=weightedRarityRoll(true);
-    const pick=pickRandomFromPool(rty);
+    const rty = weightedRarityRoll(true);
+    const pick = pickRandomFromPool(rty);
     outcomes.push(pick);
 
-    if(rty===6) pityCounter=0;
+    // pityCounter 처리
+    if(rty===6) pityCounter = 0; // 6성 획득 시 초기화
     else pityCounter++;
 
-    pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
+    pushHistory({when: new Date().toISOString(), name: pick.name, rarity: pick.rarity});
   }
-  renderCards(outcomes,count);
+
+  renderCards(outcomes, count);
   updatePullDisplay();
 }
 
