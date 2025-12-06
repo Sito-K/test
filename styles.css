@@ -95,13 +95,13 @@ select,input[type="range"],input[type="number"]{
 }
 
 .r6 .rarity-badge{
-  background:linear-gradient(135deg,#ffd36b,#ffb86b);color:#2b1a00
+  background:linear-gradient(135deg,#F25D07,#F25D07);color:#2b1a00
 }
 .r5 .rarity-badge{
-  background:linear-gradient(135deg,#efef51,#f5f518);color:#042055
+  background:linear-gradient(135deg,#FFB90E,#FFB90E);color:#042055
 }
 .r4 .rarity-badge{
-  background:linear-gradient(135deg,#9b52e4,#8729e4);color:#063b07
+  background:linear-gradient(135deg,#8350F2,#8350F2);color:#063b07
 }
 
 .log{font-size:.9rem;color:#cfe6ff;max-height:160px;overflow:auto}
