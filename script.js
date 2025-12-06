@@ -35,6 +35,7 @@ const cardTpl = document.getElementById('cardTpl').content;
 const simCountInput = document.getElementById('simCount');
 const runSim = document.getElementById('runSim');
 const simOutput = document.getElementById('simOutput');
+const clearLB = document.getElementById('clearLB');
 
 rate6.addEventListener('input', () => {
   const v = parseFloat(rate6.value);
