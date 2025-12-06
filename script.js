@@ -1,4 +1,6 @@
+// ==============================
 // 상시 풀 예시
+// ==============================
 const pool = {
   standard: [
     {id:'s6_1', name:'아델리아', rarity:6, img:'assets/ardelia.png'},
@@ -25,41 +27,38 @@ const pool = {
   ],
   banners: {
     limitedA: [
-      // 배너 A 한정
       {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png', isPickup: false},
       {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png', isPickup: true},
       {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png', isPickup: false}
     ],
     limitedB: [
-      // 배너 B 한정
       {id:'s6_389', name:'9999', rarity:6, img:'assets/99.png', isPickup: true},
       {id:'s6_111', name:'테스트', rarity:6, img:'assets/test.png', isPickup: false}
     ],
     limitedC: [
-      // 배너 C 한정
       {id:'s6_232', name:'테스트22', rarity:6, img:'assets/test.png'},
     ]
   }
 };
 
 // ==============================
-// 확률/천장 설정
+// 확률 / 천장 설정
 // ==============================
-let rates = {6:0.008, 5:0.08, 4:0.912}; // 기본 확률 (슬라이더에서 조정 가능)
-const defaultPityLimit = 80;            // 천장 설정
-let pityCounter = 0;
+const baseRate6 = 0.008;    // 기본 6성 확률 0.8%
+let rates = {5:0.08, 4:0.912};
+const defaultPityLimit = 80;   // 천장
+let pityCounter = 0;            // 현재 단발/10연 기준 pity
+const pityStart = 65;           // 확률 상향 시작
+const pityIncrement = 0.05;     // 5%씩 증가
 
 // ==============================
 // DOM 요소
 // ==============================
 const resultsEl = document.getElementById('results');
-const logEl = document.getElementById('log');
 const leaderboardEl = document.getElementById('leaderboard');
 const singleBtn = document.getElementById('singleBtn');
 const tenBtn = document.getElementById('tenBtn');
 const pityToggle = document.getElementById('pityToggle');
-const rate6 = document.getElementById('rate6');
-const rate6Label = document.getElementById('rate6Label');
 const bannerSelect = document.getElementById('bannerSelect');
 const cardTpl = document.getElementById('cardTpl').content;
 const simCountInput = document.getElementById('simCount');
@@ -70,6 +69,9 @@ const currentPullCountEl = document.getElementById('currentPullCount');
 const pityRemainingEl = document.getElementById('pityRemaining');
 const currentRate6El = document.getElementById('currentRate6');
 
+// ==============================
+// 이벤트
+// ==============================
 singleBtn.addEventListener('click', ()=> runPull(1));
 tenBtn.addEventListener('click', ()=> runPull(10));
 runSim.addEventListener('click', ()=> runSimulation());
@@ -78,23 +80,21 @@ clearLB.addEventListener('click', ()=> {
   renderLeaderboard(); 
 });
 
+// ==============================
+// 현재 뽑기 및 확률 표시
+// ==============================
 function updatePullDisplay() {
-  // pityCounter 표시(원하면 유지)
   currentPullCountEl.textContent = pityCounter;
   pityRemainingEl.textContent = Math.max(0, defaultPityLimit - pityCounter);
 
-  // 현재 6성 확률 계산
-  let currentRate = rates[6];
-  if(pityCounter >= pityStart){
-    currentRate += pityIncrement * (pityCounter - pityStart + 1);
-  }
+  let currentRate = baseRate6;
+  if(pityCounter >= pityStart) currentRate += pityIncrement * (pityCounter - pityStart + 1);
   if(currentRate > 1) currentRate = 1;
-
   currentRate6El.textContent = (currentRate*100).toFixed(2) + '%';
 }
 
 // ==============================
-// 로컬 히스토리 & 리더보드
+// 히스토리 & 리더보드
 // ==============================
 function pushHistory(entry){
   const key = 'gacha_history';
@@ -104,7 +104,7 @@ function pushHistory(entry){
 
   const lbKey = 'gacha_lb';
   const lb = JSON.parse(localStorage.getItem(lbKey) || '[]');
-  if (entry.rarity === 6){
+  if(entry.rarity === 6){
     lb.unshift({when: entry.when, name: entry.name});
     localStorage.setItem(lbKey, JSON.stringify(lb.slice(0,50)));
   }
@@ -119,7 +119,7 @@ function renderLeaderboard(){
 }
 
 // ==============================
-// 배너별 풀 가져오기
+// 배너 풀
 // ==============================
 function getBannerPool(bannerKey){
   const limitedPool = pool.banners[bannerKey] || [];
@@ -127,7 +127,7 @@ function getBannerPool(bannerKey){
 }
 
 // ==============================
-// 뽑기 로직 (픽업 50%)
+// 뽑기 로직
 // ==============================
 function pickRandomFromPool(rarity){
   const b = bannerSelect.value;
@@ -156,26 +156,19 @@ function pickRandomFromPool(rarity){
 }
 
 // ==============================
-// 별 등급 결정 (확률 + 천장 + 상향형)
+// 단발/10연 뽑기 확률 계산 (실제 pityCounter 기준)
 // ==============================
 function weightedRarityRoll(){
   let rate6 = baseRate6;
+  if(pityCounter >= pityStart) rate6 += pityIncrement * (pityCounter - pityStart + 1);
+  if(rate6 > 1) rate6 = 1;
 
-  // 확률 상향형 천장 적용 (65회 이후 5%씩 증가)
-  if(pityCounter >= pityStart){
-    rate6 += pityIncrement * (pityCounter - pityStart + 1);
-  }
-  if(rate6 > 1) rate6 = 1; // 최대 100%
-
-  // 천장 적용: toggle 체크 확인
-  if(pityToggle.checked && pityCounter >= defaultPityLimit - 1){
-    return 6; // 천장 발동
-  }
+  if(pityToggle.checked && pityCounter >= defaultPityLimit - 1) return 6;
 
   const r = Math.random();
   let acc = 0;
   for(const rty of [6,5,4]){
-    const rRate = (rty===6) ? rate6 : rates[rty];
+    const rRate = (rty===6)? rate6 : rates[rty];
     acc += rRate;
     if(r < acc) return rty;
   }
@@ -200,51 +193,43 @@ function renderCards(outcomes,count){
 }
 
 // ==============================
-// 단발/10연 소환
+// 단발/10연 뽑기
 // ==============================
-const baseRate6 = 0.008;    // 기본 6성 확률 0.8%
-const pityStart = 65;        // 확률 상승 시작
-const pityIncrement = 0.05;  // 5%씩 증가
-
-function weightedRarityRoll(applyPity=true){
-  let rate6 = rates[6];
-
-  // 확률 상향형 천장 적용
-  if(pityCounter >= pityStart){
-    rate6 += pityIncrement * (pityCounter - pityStart + 1);
-  }
-  if(rate6 > 1) rate6 = 1; // 최대 100%
-
-  // 기존 천장 체크
-  if(applyPity && pityToggle.checked && pityCounter >= defaultPityLimit - 1){
-    return 6;
-  }
-
-  const r = Math.random();
-  let acc = 0;
-  for(const rty of [6,5,4]){
-    const rRate = (rty===6) ? rate6 : rates[rty];
-    acc += rRate;
-    if(r < acc) return rty;
-  }
-  return 4;
-}
-
 function runPull(count=1){
   const outcomes = [];
   for(let i=0;i<count;i++){
-    const rty = weightedRarityRoll(); // 이제 toggle 반영됨
+    const rty = weightedRarityRoll();
     const pick = pickRandomFromPool(rty);
     outcomes.push(pick);
 
     if(rty===6) pityCounter = 0;
     else pityCounter++;
 
-    pushHistory({when: new Date().toISOString(), name: pick.name, rarity: pick.rarity});
+    pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
   }
 
-  renderCards(outcomes, count);
+  renderCards(outcomes,count);
   updatePullDisplay();
+}
+
+// ==============================
+// 시뮬레이션용 함수 (별도 로컬 pity)
+// ==============================
+function weightedRarityRollSim(localPity, enablePity){
+  let rate6 = baseRate6;
+  if(localPity >= pityStart) rate6 += pityIncrement * (localPity - pityStart + 1);
+  if(rate6 > 1) rate6 = 1;
+
+  if(enablePity && localPity >= defaultPityLimit - 1) return 6;
+
+  const r = Math.random();
+  let acc = 0;
+  for(const rty of [6,5,4]){
+    const rRate = (rty===6)? rate6 : rates[rty];
+    acc += rRate;
+    if(r < acc) return rty;
+  }
+  return 4;
 }
 
 // ==============================
@@ -253,20 +238,20 @@ function runPull(count=1){
 function runSimulation(){
   const n = Math.max(1, parseInt(simCountInput.value||1000));
   let got6 = 0, pullsToFirst6 = null, totalPulls = 0;
-  let localPity = 0;
+
+  const enablePity = pityToggle.checked;
 
   for(let i=0;i<n;i++){
+    let localPity = 0;
     let pulls = 0;
     while(true){
       pulls++;
       totalPulls++;
 
-      // 시뮬레이션용 6성 확률 계산 (상향형 천장 + pityCounter 동일)
-      let rty = weightedRarityRoll(true);
+      const rty = weightedRarityRollSim(localPity, enablePity);
 
       if(rty === 6){
         got6++;
-        localPity = 0;
         if(pullsToFirst6 === null) pullsToFirst6 = pulls;
         break;
       } else {
@@ -280,9 +265,6 @@ function runSimulation(){
 }
 
 // ==============================
-// 보조
-// ==============================
-function updateRateLabel(){ rate6Label.textContent=(parseFloat(rate6.value)||0).toFixed(2)+'%'; }
-updateRateLabel();
+// 초기화
 renderLeaderboard();
 updatePullDisplay();
