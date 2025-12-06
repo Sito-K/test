@@ -66,6 +66,8 @@ const simCountInput = document.getElementById('simCount');
 const runSim = document.getElementById('runSim');
 const simOutput = document.getElementById('simOutput');
 const clearLB = document.getElementById('clearLB');
+const currentPullCountEl = document.getElementById('currentPullCount');
+const pityRemainingEl = document.getElementById('pityRemaining');
 
 // ==============================
 // 이벤트 처리
@@ -85,6 +87,11 @@ clearLB.addEventListener('click', ()=> {
   localStorage.removeItem('gacha_lb'); 
   renderLeaderboard(); 
 });
+
+function updatePullDisplay() {
+  currentPullCountEl.textContent = pityCounter;
+  pityRemainingEl.textContent = Math.max(0, defaultPityLimit - pityCounter);
+}
 
 // ==============================
 // 로컬 히스토리 & 리더보드
@@ -197,7 +204,7 @@ function runPull(count=1){
     pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
   }
   renderCards(outcomes,count);
-  //logEl.textContent=`${count}회 소환: ${outcomes.map(o=>`${o.name}(${o.rarity}★)`).join(' / ')}`;
+  updatePullDisplay();
 }
 
 // ==============================
@@ -232,3 +239,4 @@ function runSimulation(){
 function updateRateLabel(){ rate6Label.textContent=(parseFloat(rate6.value)||0).toFixed(2)+'%'; }
 updateRateLabel();
 renderLeaderboard();
+updatePullDisplay();
