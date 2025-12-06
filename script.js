@@ -197,7 +197,7 @@ function runPull(count=1){
     pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
   }
   renderCards(outcomes,count);
-  logEl.textContent=`${count}회 소환: ${outcomes.map(o=>`${o.name}(${o.rarity}★)`).join(' / ')}`;
+  //logEl.textContent=`${count}회 소환: ${outcomes.map(o=>`${o.name}(${o.rarity}★)`).join(' / ')}`;
 }
 
 // ==============================
