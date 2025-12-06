@@ -128,7 +128,23 @@ function weightedRarityRoll(applyPity=true){
 
 function pickRandomFromPool(rarity){
   const b = bannerSelect.value;
-  const candidates = getBannerPool(b).filter(x => x.rarity === rarity);
+  const bannerPool = pool.banners[b] || [];
+  const fullPool = [...pool.standard];
+
+  if (rarity === 6 && bannerPool.length > 0){
+    // 50% 확률로 한정 캐릭터
+    if (Math.random() < 0.5){
+      // 한정 6성 중 랜덤
+      const limited6 = bannerPool.filter(x => x.rarity === 6);
+      if (limited6.length > 0) return limited6[Math.floor(Math.random()*limited6.length)];
+    }
+    // 나머지 50%는 상시 6성
+    const standard6 = fullPool.filter(x => x.rarity === 6);
+    if (standard6.length > 0) return standard6[Math.floor(Math.random()*standard6.length)];
+  }
+
+  // 5성/4성 혹은 6성 fallback
+  const candidates = [...fullPool, ...bannerPool].filter(x => x.rarity === rarity);
   if (candidates.length === 0){
     const all = Object.values(pool.banners).flat().concat(pool.standard);
     const any = all.filter(x=>x.rarity===rarity);
