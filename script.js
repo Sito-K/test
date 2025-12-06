@@ -68,6 +68,7 @@ const simOutput = document.getElementById('simOutput');
 const clearLB = document.getElementById('clearLB');
 const currentPullCountEl = document.getElementById('currentPullCount');
 const pityRemainingEl = document.getElementById('pityRemaining');
+const currentRate6El = document.getElementById('currentRate6');
 
 // ==============================
 // 이벤트 처리
@@ -89,8 +90,18 @@ clearLB.addEventListener('click', ()=> {
 });
 
 function updatePullDisplay() {
+  // pityCounter 표시(원하면 유지)
   currentPullCountEl.textContent = pityCounter;
   pityRemainingEl.textContent = Math.max(0, defaultPityLimit - pityCounter);
+
+  // 현재 6성 확률 계산
+  let currentRate = rates[6];
+  if(pityCounter >= pityStart){
+    currentRate += pityIncrement * (pityCounter - pityStart + 1);
+  }
+  if(currentRate > 1) currentRate = 1;
+
+  currentRate6El.textContent = (currentRate*100).toFixed(2) + '%';
 }
 
 // ==============================
