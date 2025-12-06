@@ -32,11 +32,14 @@ const pool = {
       {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png', isPickup: false}
     ],
     limitedB: [
-      {id:'s6_389', name:'9999', rarity:6, img:'assets/99.png', isPickup: true},
-      {id:'s6_111', name:'테스트', rarity:6, img:'assets/test.png', isPickup: false}
+      {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png', isPickup: false},
+      {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png', isPickup: false},
+      {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png', isPickup: true}
     ],
     limitedC: [
-      {id:'s6_232', name:'테스트22', rarity:6, img:'assets/test.png'},
+      {id:'s6_3', name:'질베르타', rarity:6, img:'assets/gilberta.png', isPickup: true},
+      {id:'s6_4', name:'레바테인', rarity:6, img:'assets/laevatain.png', isPickup: false},
+      {id:'s6_8', name:'이본', rarity:6, img:'assets/yvonne.png', isPickup: false}
     ]
   }
 };
@@ -59,7 +62,6 @@ const resultsEl = document.getElementById('results');
 const leaderboardEl = document.getElementById('leaderboard');
 const singleBtn = document.getElementById('singleBtn');
 const tenBtn = document.getElementById('tenBtn');
-const pityToggle = document.getElementById('pityToggle');
 const bannerSelect = document.getElementById('bannerSelect');
 const cardTpl = document.getElementById('cardTpl').content;
 const simCountInput = document.getElementById('simCount');
@@ -172,7 +174,7 @@ function weightedRarityRoll(){
   if(pityCounter >= pityStart) rate6 += pityIncrement * (pityCounter - pityStart + 1);
   if(rate6 > 1) rate6 = 1;
 
-  if(pityToggle.checked && pityCounter >= defaultPityLimit - 1) return 6;
+  if(pityCounter >= defaultPityLimit - 1) return 6;
 
   const r = Math.random();
   let acc = 0;
