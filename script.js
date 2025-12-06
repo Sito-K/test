@@ -156,17 +156,28 @@ function pickRandomFromPool(rarity){
 }
 
 // ==============================
-// 별 등급 결정 (확률+천장)
+// 별 등급 결정 (확률 + 천장 + 상향형)
 // ==============================
-function weightedRarityRoll(applyPity=true){
-  if(applyPity && pityToggle.checked && pityCounter>=defaultPityLimit-1){
-    return 6; // 천장 적용
+function weightedRarityRoll(){
+  let rate6 = baseRate6;
+
+  // 확률 상향형 천장 적용 (65회 이후 5%씩 증가)
+  if(pityCounter >= pityStart){
+    rate6 += pityIncrement * (pityCounter - pityStart + 1);
   }
+  if(rate6 > 1) rate6 = 1; // 최대 100%
+
+  // 천장 적용: toggle 체크 확인
+  if(pityToggle.checked && pityCounter >= defaultPityLimit - 1){
+    return 6; // 천장 발동
+  }
+
   const r = Math.random();
-  let acc=0;
+  let acc = 0;
   for(const rty of [6,5,4]){
-    acc+=rates[rty];
-    if(r<acc) return rty;
+    const rRate = (rty===6) ? rate6 : rates[rty];
+    acc += rRate;
+    if(r < acc) return rty;
   }
   return 4;
 }
@@ -222,12 +233,11 @@ function weightedRarityRoll(applyPity=true){
 function runPull(count=1){
   const outcomes = [];
   for(let i=0;i<count;i++){
-    const rty = weightedRarityRoll(true);
+    const rty = weightedRarityRoll(); // 이제 toggle 반영됨
     const pick = pickRandomFromPool(rty);
     outcomes.push(pick);
 
-    // pityCounter 처리
-    if(rty===6) pityCounter = 0; // 6성 획득 시 초기화
+    if(rty===6) pityCounter = 0;
     else pityCounter++;
 
     pushHistory({when: new Date().toISOString(), name: pick.name, rarity: pick.rarity});
