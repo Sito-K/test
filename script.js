@@ -45,7 +45,7 @@ const pool = {
 };
 
 // ==============================
-// 확률 / 천장 설정
+// 확률 / 천장
 // ==============================
 const baseRate6 = 0.008;
 let rates = {5:0.08, 4:0.912};
@@ -56,7 +56,7 @@ const pityStart = 65;
 const pityIncrement = 0.05;
 
 // ==============================
-// DOM
+// DOM 요소
 // ==============================
 const resultsEl = document.getElementById('results');
 const leaderboardEl = document.getElementById('leaderboard');
@@ -91,7 +91,7 @@ bannerSelect.addEventListener('change', ()=>{
 });
 
 // ==============================
-// 뽑기 표시
+// 표시 업데이트
 // ==============================
 function updatePullDisplay() {
   currentPullCountEl.textContent = pityCounter;
@@ -105,7 +105,7 @@ function updatePullDisplay() {
 }
 
 // ==============================
-// 히스토리 & 리더보드
+// 히스토리 / 리더보드
 // ==============================
 function pushHistory(entry){
   const key = 'gacha_history';
@@ -141,7 +141,8 @@ function getBannerPool(bannerKey){
 // 뽑기 로직
 // ==============================
 function pickRandomFromPool(rarity){
-  const bannerPool = pool.banners[bannerSelect.value] || [];
+  const b = bannerSelect.value;
+  const bannerPool = pool.banners[b] || [];
   const standardPool = pool.standard;
 
   if(rarity===6){
@@ -159,13 +160,14 @@ function pickRandomFromPool(rarity){
   if(candidates.length===0){
     const all = Object.values(pool.banners).flat().concat(pool.standard);
     const any = all.filter(x=>x.rarity===rarity);
-    return any[Math.floor(Math.random()*any.length)];
+    if(any.length>0) return any[Math.floor(Math.random()*any.length)];
+    return all[Math.floor(Math.random()*all.length)];
   }
   return candidates[Math.floor(Math.random()*candidates.length)];
 }
 
 // ==============================
-// 뽑기 확률
+// 단발/10연 뽑기 확률
 // ==============================
 function weightedRarityRoll(){
   let rate6 = baseRate6;
@@ -202,7 +204,7 @@ function renderCards(outcomes,count){
 }
 
 // ==============================
-// 단발/10연 뽑기
+// 단발/10연 실행
 // ==============================
 function runPull(count=1){
   const outcomes = [];
@@ -223,43 +225,7 @@ function runPull(count=1){
 }
 
 // ==============================
-// 시뮬레이션
-// ==============================
-function runSimulation(){
-  const n = Math.max(1, parseInt(simCountInput.value||1000));
-  let got6 = 0, pullsToFirst6 = null, totalPulls = 0;
-
-  for(let i=0;i<n;i++){
-    let localPity = 0;
-    let pulls = 0;
-    while(true){
-      pulls++;
-      totalPulls++;
-      let rate6 = baseRate6;
-      if(localPity >= pityStart) rate6 += pityIncrement*(localPity-pityStart+1);
-      if(rate6>1) rate6=1;
-      const r = Math.random();
-      let rty = 4;
-      let acc = 0;
-      for(const t of [6,5,4]){
-        const rRate = (t===6)? rate6 : rates[t];
-        acc += rRate;
-        if(r<acc){ rty = t; break; }
-      }
-
-      if(rty===6){
-        got6++;
-        if(pullsToFirst6===null) pullsToFirst6 = pulls;
-        break;
-      } else localPity++;
-    }
-  }
-
-  const avgPullsFor6 = (totalPulls / got6) || 0;
-  simOutput.textContent = `실험 수: ${n}\n6성 획득 총합: ${got6}\n평균 뽑기 (6성 당): ${avgPullsFor6.toFixed(2)}\n첫 6성까지 걸린 뽑기(샘플): ${pullsToFirst6}`;
-}
-
-// ==============================
 // 초기화
+// ==============================
 renderLeaderboard();
 updatePullDisplay();
