@@ -70,7 +70,6 @@ singleBtn.addEventListener('click', ()=> runPull(1));
 tenBtn.addEventListener('click', ()=> runPull(10));
 runSim.addEventListener('click', ()=> runSimulation());
 clearLB.addEventListener('click', ()=> { localStorage.removeItem('gacha_lb'); renderLeaderboard(); });
-exportCSV.addEventListener('click', ()=> exportHistoryCSV());
 
 // 초기화
 renderLeaderboard();
@@ -157,7 +156,7 @@ function runPull(count=1){
   }
   renderCards(outcomes, count);
   // 로그 요약
-  logEl.textContent = `${new Date().toLocaleString()} — ${count}회 소환: ${outcomes.map(o=>`${o.name}(${o.rarity}★)`).join(' / ')}`;
+  logEl.textContent = `${count}회 소환: ${outcomes.map(o=>`${o.name}(${o.rarity}★)`).join(' / ')}`;
 }
 
 // ===== 시뮬레이션 기능 =====
