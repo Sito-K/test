@@ -68,6 +68,14 @@ select,input[type="range"],input[type="number"]{
   perspective:900px;
 }
 
+.card-inner{
+  width:100%;
+  height:100%;
+  position:absolute;
+  top:0;
+  left:0;
+}
+
 /* 단일 소환일 때 카드 작게 */
 .results-grid.single .card {
   padding-bottom:120%;
