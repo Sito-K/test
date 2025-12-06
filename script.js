@@ -70,17 +70,6 @@ const currentPullCountEl = document.getElementById('currentPullCount');
 const pityRemainingEl = document.getElementById('pityRemaining');
 const currentRate6El = document.getElementById('currentRate6');
 
-// ==============================
-// 이벤트 처리
-// ==============================
-rate6.addEventListener('input', () => {
-  const v = parseFloat(rate6.value);
-  rate6Label.textContent = v.toFixed(2) + '%';
-  rates[6] = v / 100;
-  rates[5] = 0.08;
-  rates[4] = 1 - rates[6] - rates[5];
-});
-
 singleBtn.addEventListener('click', ()=> runPull(1));
 tenBtn.addEventListener('click', ()=> runPull(10));
 runSim.addEventListener('click', ()=> runSimulation());
