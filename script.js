@@ -63,7 +63,6 @@ const resultsEl = document.getElementById('results');
 const leaderboardEl = document.getElementById('leaderboard');
 const singleBtn = document.getElementById('singleBtn');
 const tenBtn = document.getElementById('tenBtn');
-const bannerSelect = document.getElementById('bannerSelect');
 const cardTpl = document.getElementById('cardTpl').content;
 const simCountInput = document.getElementById('simCount');
 const runSim = document.getElementById('runSim');
@@ -73,6 +72,10 @@ const currentPullCountEl = document.getElementById('currentPullCount');
 const pityRemainingEl = document.getElementById('pityRemaining');
 const currentRate6El = document.getElementById('currentRate6');
 const totalPullCountEl = document.getElementById('totalPullCount');
+
+// 🔥 배너 선택 버튼 
+const bannerButtons = document.querySelectorAll('.banner-btn');
+let currentBanner = "standard";
 
 // ==============================
 // 이벤트
@@ -85,10 +88,19 @@ clearLB.addEventListener('click', ()=> {
   renderLeaderboard(); 
 });
 
-// 배너 변경 시 천장 초기화
-bannerSelect.addEventListener('change', ()=>{
-  pityCounter = 0;
-  updatePullDisplay();
+// 🔥 버튼 클릭 → 배너 변경
+bannerButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+
+    currentBanner = btn.dataset.banner;
+
+    bannerButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+
+    pityCounter = 0;
+    pity5Counter = 0;
+    updatePullDisplay();
+  });
 });
 
 // ==============================
@@ -106,7 +118,7 @@ function updatePullDisplay() {
 }
 
 // ==============================
-// 히스토리 / 리더보드
+// 히스토리
 // ==============================
 function pushHistory(entry){
   const key = 'gacha_history';
@@ -133,17 +145,15 @@ function renderLeaderboard(){
 // ==============================
 // 배너 풀
 // ==============================
-function getBannerPool(bannerKey){
-  const limitedPool = pool.banners[bannerKey] || [];
-  return [...pool.standard, ...limitedPool];
+function getBannerPool(){
+  return [...pool.standard, ...(pool.banners[currentBanner] || [])];
 }
 
 // ==============================
-// 뽑기 로직
+// 캐릭터 선택
 // ==============================
 function pickRandomFromPool(rarity){
-  const b = bannerSelect.value;
-  const bannerPool = pool.banners[b] || [];
+  const bannerPool = pool.banners[currentBanner] || [];
   const standardPool = pool.standard;
 
   if(rarity===6){
@@ -158,48 +168,32 @@ function pickRandomFromPool(rarity){
   }
 
   const candidates = [...standardPool, ...bannerPool].filter(x=>x.rarity===rarity);
-  if(candidates.length===0){
-    const all = Object.values(pool.banners).flat().concat(pool.standard);
-    const any = all.filter(x=>x.rarity===rarity);
-    if(any.length>0) return any[Math.floor(Math.random()*any.length)];
-    return all[Math.floor(Math.random()*all.length)];
-  }
   return candidates[Math.floor(Math.random()*candidates.length)];
 }
 
 // ==============================
-// 단발/10연 뽑기 확률
+// 확률 로직 (5성 천장 포함)
 // ==============================
 function weightedRarityRoll(){
   let rate6 = baseRate6;
 
-  // 6성 가속 피티
   if(pityCounter >= pityStart) {
     rate6 += pityIncrement * (pityCounter - pityStart + 1);
   }
   if(rate6 > 1) rate6 = 1;
 
-  // -------------------------------------
-  // ① 5성 천장: 10회 동안 5성 이상 없으면 이번 뽑기는 강제 5성
-  // -------------------------------------
+  // 5성 천장
   if(pity5Counter >= 9) {
-    return 5; // 이번 뽑기는 반드시 5성
+    return 5;
   }
 
-  // -------------------------------------
-  // ② 6성 천장: 80회째는 강제 6성
-  // -------------------------------------
+  // 6성 천장
   if(pityCounter >= defaultPityLimit - 1) {
     return 6;
   }
 
-  // -------------------------------------
-  // ③ 일반 확률 계산
-  // -------------------------------------
   const r = Math.random();
-  let acc = 0;
-
-  acc += rate6;
+  let acc = rate6;
   if(r < acc) return 6;
 
   acc += rates[5];
@@ -226,7 +220,7 @@ function renderCards(outcomes,count){
 }
 
 // ==============================
-// 단발/10연 실행
+// 뽑기 실행
 // ==============================
 function runPull(count=1){
   const outcomes = [];
@@ -235,22 +229,21 @@ function runPull(count=1){
     const pick = pickRandomFromPool(rty);
     outcomes.push(pick);
 
-// pity 처리
-  if(rty === 6){
-    pityCounter = 0;      // 6성 피티 리셋
-    pity5Counter = 0;     // 5성 피티도 리셋
-  } else if(rty === 5){
-    pity5Counter = 0;     // 5성 피티 리셋
-    pityCounter++;        // 6성 피티 증가
-  } else {
-    pityCounter++;        // 4성 → 6성 피티 증가
-    pity5Counter++;       // 4성 → 5성 피티 증가
-  }
+    // pity 처리
+    if(rty === 6){
+      pityCounter = 0;
+      pity5Counter = 0;
+    } else if(rty === 5){
+      pity5Counter = 0;
+      pityCounter++;
+    } else {
+      pityCounter++;
+      pity5Counter++;
+    }
 
     totalPullCounter++;
     pushHistory({when:new Date().toISOString(), name:pick.name, rarity:pick.rarity});
   }
-
   renderCards(outcomes,count);
   updatePullDisplay();
 }
