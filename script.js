@@ -64,9 +64,6 @@ const leaderboardEl = document.getElementById('leaderboard');
 const singleBtn = document.getElementById('singleBtn');
 const tenBtn = document.getElementById('tenBtn');
 const cardTpl = document.getElementById('cardTpl').content;
-const simCountInput = document.getElementById('simCount');
-const runSim = document.getElementById('runSim');
-const simOutput = document.getElementById('simOutput');
 const clearLB = document.getElementById('clearLB');
 const currentPullCountEl = document.getElementById('currentPullCount');
 const pityRemainingEl = document.getElementById('pityRemaining');
@@ -82,7 +79,6 @@ let currentBanner = "standard";
 // ==============================
 singleBtn.addEventListener('click', ()=> runPull(1));
 tenBtn.addEventListener('click', ()=> runPull(10));
-runSim.addEventListener('click', ()=> runSimulation());
 clearLB.addEventListener('click', ()=> { 
   localStorage.removeItem('gacha_lb'); 
   renderLeaderboard(); 
@@ -239,142 +235,6 @@ function runPull(count=1){
   }
   renderCards(outcomes,count);
   updatePullDisplay();
-}
-
-// ==============================
-// 확률 시뮬레이션 기능
-// ==============================
-function runSimulation(){
-  const nRaw = parseInt(simCountInput.value, 10);
-  const trials = (Number.isFinite(nRaw) && nRaw > 0) ? nRaw : 1000;
-
-  // 통계
-  const stats = {6:0, 5:0, 4:0};
-  let pullsToFirst6Sum = 0;
-  let trialsWith6 = 0;
-
-  for(let t=0; t<trials; t++){
-    // 각 trial마다 pity 독립 관리 (실제 UI 피티와 분리)
-    let local6 = 0;
-    let local5 = 0;
-
-    // ---------------------
-    // 1) 단발 뽑기 1회 통계
-    // ---------------------
-    let rate6 = baseRate6;
-    if(local6 >= pityStart) rate6 += pityIncrement * (local6 - pityStart + 1);
-    if(rate6 > 1) rate6 = 1;
-
-    let rty;
-
-    // ① 5성 천장(10회 보장)
-    if(local5 >= 9){
-      const r = Math.random();
-      if(r < rate6) rty = 6;
-      else rty = 5;
-    }
-    // ② 6성 천장(80회 보장)
-    else if(local6 >= defaultPityLimit - 1){
-      rty = 6;
-    }
-    // ③ 일반 롤
-    else {
-      const r = Math.random();
-      let acc = 0;
-      acc += rate6;
-      if(r < acc) rty = 6;
-      else {
-        acc += rates[5];
-        if(r < acc) rty = 5;
-        else rty = 4;
-      }
-    }
-
-    stats[rty]++;
-
-    // local pity 업데이트
-    if(rty === 6){
-      local6 = 0;
-      local5 = 0;
-    } else if(rty === 5){
-      local6++;
-      local5 = 0;
-    } else {
-      local6++;
-      local5++;
-    }
-
-    // ---------------------
-    // 2) "6성까지 몇 뽑?" 통계
-    // ---------------------
-    let p6 = startPity6;
-    let p5 = startPity5;
-    let pulls = 0;
-
-    while(true){
-      pulls++;
-
-      let rate6b = baseRate6;
-      if(p6 >= pityStart) rate6b += pityIncrement * (p6 - pityStart + 1);
-      if(rate6b > 1) rate6b = 1;
-
-      let r2;
-      // 5성 천장
-      if(p5 >= 9){
-        const r = Math.random();
-        if(r < rate6b) r2 = 6;
-        else r2 = 5;
-      }
-      // 6성 천장
-      else if(p6 >= defaultPityLimit - 1){
-        r2 = 6;
-      }
-      // 일반 롤
-      else {
-        const rr = Math.random();
-        let acc2 = 0;
-        acc2 += rate6b;
-        if(rr < acc2) r2 = 6;
-        else {
-          acc2 += rates[5];
-          if(rr < acc2) r2 = 5;
-          else r2 = 4;
-        }
-      }
-
-      if(r2 === 6){
-        pullsToFirst6Sum += pulls;
-        trialsWith6++;
-        break;
-      } else if(r2 === 5){
-        p6++;
-        p5 = 0;
-      } else {
-        p6++;
-        p5++;
-      }
-    }
-  }
-
-  // 결과 계산
-  const pct6 = (stats[6]/total*100).toFixed(4);
-  const pct5 = (stats[5]/total*100).toFixed(4);
-  const pct4 = (stats[4]/total*100).toFixed(4);
-  const avgPullsTo6 = trialsWith6 > 0 ? (pullsToFirst6Sum / trialsWith6).toFixed(2) : 'N/A';
-
-  const out = [
-    `시뮬레이션 횟수: ${trials.toLocaleString()}`,
-    '',
-    `결과 요약:`,
-    `  6성: ${stats[6].toLocaleString()}개 (${pct6}%)`,
-    `  5성: ${stats[5].toLocaleString()}개 (${pct5}%)`,
-    `  4성: ${stats[4].toLocaleString()}개 (${pct4}%)`,
-    '',
-    `6성 등장까지 평균 뽑기수: ${avgPullsTo6}`,
-    '',
-  ].join('\n');
-
-  simOutput.textContent = out;
 }
 
 // ==============================
