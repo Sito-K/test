@@ -48,7 +48,7 @@ const pool = {
 // 확률 / 천장
 // ==============================
 const baseRate6 = 0.008;
-let rates = {5:0.08, 4:0.912};
+let rates = {5:0.08};
 const defaultPityLimit = 80;
 let pityCounter = 0;
 let pity5Counter = 0;
@@ -140,13 +140,6 @@ function renderLeaderboard(){
   if(lb.length===0) leaderboardEl.textContent='기록 없음';
   else leaderboardEl.innerHTML = lb.slice(0,20)
     .map((e,i)=> `<div>${i+1}. ${e.name} — ${new Date(e.when).toLocaleString()}</div>`).join('');
-}
-
-// ==============================
-// 배너 풀
-// ==============================
-function getBannerPool(){
-  return [...pool.standard, ...(pool.banners[currentBanner] || [])];
 }
 
 // ==============================
@@ -252,101 +245,136 @@ function runPull(count=1){
 // 확률 시뮬레이션 기능
 // ==============================
 function runSimulation(){
-  const pullsPerTrialRaw = parseInt(simCountInput.value, 10);
-  const pullsPerTrial = (Number.isFinite(pullsPerTrialRaw) && pullsPerTrialRaw > 0)
-    ? pullsPerTrialRaw 
-    : 500;
+  const nRaw = parseInt(simCountInput.value, 10);
+  const trials = (Number.isFinite(nRaw) && nRaw > 0) ? nRaw : 1000;
 
-  const trials = 1000; // 반복 횟수
-
-  // 전체 결과 통계
-  const totalCounts = {6:0,5:0,4:0};
-
-  // 캐릭터별 6성 카운트
-  const sixCharCount = {};  
-  const allSixChars = [...pool.standard, ...(pool.banners[currentBanner] || [])]
-                        .filter(x => x.rarity === 6);
-
-  // 초기 0 채우기
-  allSixChars.forEach(ch => sixCharCount[ch.name] = 0);
+  // 통계
+  const stats = {6:0, 5:0, 4:0};
+  let pullsToFirst6Sum = 0;
+  let trialsWith6 = 0;
 
   for(let t=0; t<trials; t++){
-    let p6 = 0; // 6성 pity
-    let p5 = 0; // 5성 pity
+    // 각 trial마다 pity 독립 관리 (실제 UI 피티와 분리)
+    let local6 = 0;
+    let local5 = 0;
 
-    for(let i=0; i<pullsPerTrial; i++){
-      // 소프트 피티 적용
-      let rate6 = baseRate6;
-      if(p6 >= pityStart){
-        rate6 += pityIncrement * (p6 - pityStart + 1);
-        if(rate6 > 1) rate6 = 1;
-      }
+    // ---------------------
+    // 1) 단발 뽑기 1회 통계
+    // ---------------------
+    let rate6 = baseRate6;
+    if(local6 >= pityStart) rate6 += pityIncrement * (local6 - pityStart + 1);
+    if(rate6 > 1) rate6 = 1;
 
-      let rty;
+    let rty;
 
-      // ★ 5성 10회 천장
-      if(p5 >= 9){
-        const r = Math.random();
-        rty = (r < rate6) ? 6 : 5;
-      }
-      // ★ 6성 80회 천장
-      else if(p6 >= defaultPityLimit - 1){
-        rty = 6;
-      }
-      // ★ 일반
+    // ① 5성 천장(10회 보장)
+    if(local5 >= 9){
+      const r = Math.random();
+      if(r < rate6) rty = 6;
+      else rty = 5;
+    }
+    // ② 6성 천장(80회 보장)
+    else if(local6 >= defaultPityLimit - 1){
+      rty = 6;
+    }
+    // ③ 일반 롤
+    else {
+      const r = Math.random();
+      let acc = 0;
+      acc += rate6;
+      if(r < acc) rty = 6;
       else {
-        const r = Math.random();
-        if(r < rate6) rty = 6;
-        else if(r < rate6 + rates[5]) rty = 5;
+        acc += rates[5];
+        if(r < acc) rty = 5;
         else rty = 4;
       }
+    }
 
-      totalCounts[rty]++;
+    stats[rty]++;
 
-      // ★ 6성이면 캐릭터 선택 후 카운트 증가
-      if(rty === 6){
-        const picked = pickRandomFromPool(6);
-        sixCharCount[picked.name]++;
+    // local pity 업데이트
+    if(rty === 6){
+      local6 = 0;
+      local5 = 0;
+    } else if(rty === 5){
+      local6++;
+      local5 = 0;
+    } else {
+      local6++;
+      local5++;
+    }
 
-        p6 = 0;
-        p5 = 0;
+    // ---------------------
+    // 2) "6성까지 몇 뽑?" 통계
+    // ---------------------
+    let p6 = startPity6;
+    let p5 = startPity5;
+    let pulls = 0;
+
+    while(true){
+      pulls++;
+
+      let rate6b = baseRate6;
+      if(p6 >= pityStart) rate6b += pityIncrement * (p6 - pityStart + 1);
+      if(rate6b > 1) rate6b = 1;
+
+      let r2;
+      // 5성 천장
+      if(p5 >= 9){
+        const r = Math.random();
+        if(r < rate6b) r2 = 6;
+        else r2 = 5;
       }
-      else if(rty === 5){
+      // 6성 천장
+      else if(p6 >= defaultPityLimit - 1){
+        r2 = 6;
+      }
+      // 일반 롤
+      else {
+        const rr = Math.random();
+        let acc2 = 0;
+        acc2 += rate6b;
+        if(rr < acc2) r2 = 6;
+        else {
+          acc2 += rates[5];
+          if(rr < acc2) r2 = 5;
+          else r2 = 4;
+        }
+      }
+
+      if(r2 === 6){
+        pullsToFirst6Sum += pulls;
+        trialsWith6++;
+        break;
+      } else if(r2 === 5){
         p6++;
         p5 = 0;
-      }
-      else{
+      } else {
         p6++;
         p5++;
       }
     }
   }
 
-  // 비율 계산
-  const totalPulls = pullsPerTrial * trials;
-  const pct6 = (totalCounts[6] / totalPulls * 100).toFixed(4);
-  const pct5 = (totalCounts[5] / totalPulls * 100).toFixed(4);
-  const pct4 = (totalCounts[4] / totalPulls * 100).toFixed(4);
+  // 결과 계산
+  const pct6 = (stats[6]/total*100).toFixed(4);
+  const pct5 = (stats[5]/total*100).toFixed(4);
+  const pct4 = (stats[4]/total*100).toFixed(4);
+  const avgPullsTo6 = trialsWith6 > 0 ? (pullsToFirst6Sum / trialsWith6).toFixed(2) : 'N/A';
 
-  // 캐릭터별 정렬
-  const charStats = Object.entries(sixCharCount)
-    .sort((a,b)=> b[1] - a[1])
-    .map(([name, count]) => `${name}: ${count}`)
-    .join('\n');
-
-  simOutput.textContent = [
-    `시뮬레이션 반복: ${trials}회`,
-    `한 번에 ${pullsPerTrial}뽑`,
-    ``,
-    `전체 뽑기: ${totalPulls.toLocaleString()}회`,
-    ``,
-    `6성: ${totalCounts[6].toLocaleString()}개 (${pct6}%)`,
-    `5성: ${totalCounts[5].toLocaleString()}개 (${pct5}%)`,
-    `4성: ${totalCounts[4].toLocaleString()}개 (${pct4}%)`,
-    ``,
-    `===== 6성 캐릭터별 등장 횟수 =====`,
-    charStats
+  const out = [
+    `시뮬레이션 횟수: ${trials.toLocaleString()}`,
+    '',
+    `결과 요약:`,
+    `  6성: ${stats[6].toLocaleString()}개 (${pct6}%)`,
+    `  5성: ${stats[5].toLocaleString()}개 (${pct5}%)`,
+    `  4성: ${stats[4].toLocaleString()}개 (${pct4}%)`,
+    '',
+    `6성 등장까지 평균 뽑기수: ${avgPullsTo6}`,
+    '',
   ].join('\n');
+
+  simOutput.textContent = out;
 }
 
 // ==============================
