@@ -253,98 +253,100 @@ function runPull(count=1){
 // ==============================
 function runSimulation(){
   const pullsPerTrialRaw = parseInt(simCountInput.value, 10);
-  const pullsPerTrial = (Number.isFinite(pullsPerTrialRaw) && pullsPerTrialRaw > 0) ? pullsPerTrialRaw : 500;
+  const pullsPerTrial = (Number.isFinite(pullsPerTrialRaw) && pullsPerTrialRaw > 0)
+    ? pullsPerTrialRaw 
+    : 500;
 
-  const trials = 10000; // 몬테카를로 반복 수 (필요하면 바꿔도 됨)
+  const trials = 1000; // 반복 횟수
 
-  // 통계
-  let totalCounts = {6:0,5:0,4:0};
-  let sixsPerTrial = [];
+  // 전체 결과 통계
+  const totalCounts = {6:0,5:0,4:0};
+
+  // 캐릭터별 6성 카운트
+  const sixCharCount = {};  
+  const allSixChars = [...pool.standard, ...(pool.banners[currentBanner] || [])]
+                        .filter(x => x.rarity === 6);
+
+  // 초기 0 채우기
+  allSixChars.forEach(ch => sixCharCount[ch.name] = 0);
 
   for(let t=0; t<trials; t++){
-    // 각 trial은 독립적인 pity 관리
-    let local6 = 0;   // pity counter for 6 (counts pulls since last 6)
-    let local5 = 0;   // pity counter for 5 (counts pulls since last 5)
-    let counts = {6:0,5:0,4:0};
+    let p6 = 0; // 6성 pity
+    let p5 = 0; // 5성 pity
 
-    for(let p=0; p<pullsPerTrial; p++){
-      // 현재의 6성 확률 계산
+    for(let i=0; i<pullsPerTrial; i++){
+      // 소프트 피티 적용
       let rate6 = baseRate6;
-      if(local6 >= pityStart) rate6 += pityIncrement * (local6 - pityStart + 1);
-      if(rate6 > 1) rate6 = 1;
+      if(p6 >= pityStart){
+        rate6 += pityIncrement * (p6 - pityStart + 1);
+        if(rate6 > 1) rate6 = 1;
+      }
 
       let rty;
 
-      // 5성 천장(10회 보장)
-      if(local5 >= 9){
+      // ★ 5성 10회 천장
+      if(p5 >= 9){
         const r = Math.random();
-        if(r < rate6) rty = 6;
-        else rty = 5;
+        rty = (r < rate6) ? 6 : 5;
       }
-      // 6성 천장
-      else if(local6 >= defaultPityLimit - 1){
+      // ★ 6성 80회 천장
+      else if(p6 >= defaultPityLimit - 1){
         rty = 6;
       }
-      // 일반 롤
+      // ★ 일반
       else {
-        const rr = Math.random();
-        let acc = rate6;
-        if(rr < acc) rty = 6;
-        else {
-          acc += rates[5];
-          if(rr < acc) rty = 5;
-          else rty = 4;
-        }
+        const r = Math.random();
+        if(r < rate6) rty = 6;
+        else if(r < rate6 + rates[5]) rty = 5;
+        else rty = 4;
       }
 
-      // 업데이트
-      counts[rty]++;
+      totalCounts[rty]++;
+
+      // ★ 6성이면 캐릭터 선택 후 카운트 증가
       if(rty === 6){
-        local6 = 0;
-        local5 = 0;
-      } else if(rty === 5){
-        local5 = 0;
-        local6++;
-      } else {
-        local6++;
-        local5++;
+        const picked = pickRandomFromPool(6);
+        sixCharCount[picked.name]++;
+
+        p6 = 0;
+        p5 = 0;
+      }
+      else if(rty === 5){
+        p6++;
+        p5 = 0;
+      }
+      else{
+        p6++;
+        p5++;
       }
     }
-
-    // trial 결과 집계
-    totalCounts[6] += counts[6];
-    totalCounts[5] += counts[5];
-    totalCounts[4] += counts[4];
-    sixsPerTrial.push(counts[6]);
   }
 
-  // 통계 계산 및 출력
+  // 비율 계산
   const totalPulls = pullsPerTrial * trials;
-  const pct6 = (totalCounts[6]/totalPulls*100).toFixed(4);
-  const pct5 = (totalCounts[5]/totalPulls*100).toFixed(4);
-  const pct4 = (totalCounts[4]/totalPulls*100).toFixed(4);
+  const pct6 = (totalCounts[6] / totalPulls * 100).toFixed(4);
+  const pct5 = (totalCounts[5] / totalPulls * 100).toFixed(4);
+  const pct4 = (totalCounts[4] / totalPulls * 100).toFixed(4);
 
-  const sumSixs = sixsPerTrial.reduce((a,b)=>a+b,0);
-  const avgSixsPerRun = (sumSixs / trials).toFixed(2);
-  const minSixs = Math.min(...sixsPerTrial);
-  const maxSixs = Math.max(...sixsPerTrial);
+  // 캐릭터별 정렬
+  const charStats = Object.entries(sixCharCount)
+    .sort((a,b)=> b[1] - a[1])
+    .map(([name, count]) => `${name}: ${count}`)
+    .join('\n');
 
-  const out = [
-    `시뮬레이션 반복: ${trials.toLocaleString()}회`,
-    `한 번에 수행하는 뽑기 수: ${pullsPerTrial.toLocaleString()}회`,
-    '',
-    `전체 풀 개수: ${totalPulls.toLocaleString()}`,
-    '',
-    `전체 비율:`,
-    `  6성: ${totalCounts[6].toLocaleString()}개 (${pct6}%)`,
-    `  5성: ${totalCounts[5].toLocaleString()}개 (${pct5}%)`,
-    `  4성: ${totalCounts[4].toLocaleString()}개 (${pct4}%)`,
-    '',
-    `한 번의 ${pullsPerTrial}뽑 시 평균 6성 개수: ${avgSixsPerRun}`,
-    `관측된 최소 6성: ${minSixs}, 최대 6성: ${maxSixs}`,
+  simOutput.textContent = [
+    `시뮬레이션 반복: ${trials}회`,
+    `한 번에 ${pullsPerTrial}뽑`,
+    ``,
+    `전체 뽑기: ${totalPulls.toLocaleString()}회`,
+    ``,
+    `6성: ${totalCounts[6].toLocaleString()}개 (${pct6}%)`,
+    `5성: ${totalCounts[5].toLocaleString()}개 (${pct5}%)`,
+    `4성: ${totalCounts[4].toLocaleString()}개 (${pct4}%)`,
+    ``,
+    `===== 6성 캐릭터별 등장 횟수 =====`,
+    charStats
   ].join('\n');
-
-  simOutput.textContent = out;
 }
 
 // ==============================
